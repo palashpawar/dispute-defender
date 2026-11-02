@@ -137,7 +137,8 @@ class PayPalClient:
 
     def capture_order(self, order_id: str) -> dict:
         return self._request("POST", f"/v2/checkout/orders/{order_id}/capture", json={},
-                             headers={"PayPal-Request-Id": str(uuid.uuid4())})
+                             headers={"PayPal-Request-Id": str(uuid.uuid4()),
+                                      "Prefer": "return=representation"})  # minimal response omits items
 
     # ---- Webhooks -----------------------------------------------------------------------------
     def verify_webhook(self, headers: dict, event: dict) -> bool:

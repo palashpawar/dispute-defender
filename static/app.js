@@ -447,6 +447,16 @@ async function boot() {
       grid.flashCells({ rowNodes: [grid.getRowNode(r.dispute_id)].filter(Boolean) });
     } catch (e) { toast(e.message.includes("No more") ? "No more queued demo disputes." : e.message); }
   };
+  $("#btn-track").hidden = meta.paypal_mode === "mock";
+  $("#btn-track").onclick = async () => {
+    const id = prompt("PayPal case ID (e.g. PP-R-ABC-12345678)");
+    if (!id) return;
+    try {
+      const r = await api("/api/disputes/track", { method: "POST", body: JSON.stringify({ dispute_id: id }) });
+      toast(`Tracking ${r.dispute_id}. Analysis started.`);
+      await refresh();
+    } catch (e) { toast(e.message); }
+  };
   $("#btn-analyze-all").onclick = async () => {
     const r = await api("/api/analyze-all", { method: "POST" });
     toast(r.started.length ? `Analyzing ${r.started.length} dispute(s)…` : "Everything open is already analyzed.");

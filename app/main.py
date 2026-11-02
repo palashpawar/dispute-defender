@@ -126,9 +126,16 @@ def _row(d: dict) -> dict:
 
 @app.get("/api/disputes")
 def list_disputes():
-    summaries = _paypal_call(paypal.list_disputes)
-    details = list(pool.map(lambda s: _paypal_call(paypal.get_dispute, s["dispute_id"]), summaries)) if summaries else []
-    rows = [_row(d) for d in details]
+    ids = [s["dispute_id"] for s in _paypal_call(paypal.list_disputes)]
+    ids += [i for i in store.known_disputes if i not in ids]
+
+    def fetch(dispute_id):
+        try:
+            return paypal.get_dispute(dispute_id)
+        except PayPalError:
+            return None
+
+    rows = [_row(d) for d in pool.map(fetch, ids) if d]
     return sorted(rows, key=lambda r: (r["status"] == "RESOLVED", r["due"] or "9999"))
 
 
@@ -265,6 +272,7 @@ def handle_event(event: dict) -> dict:
     etype = event.get("event_type", "")
     dispute_id = (event.get("resource") or {}).get("dispute_id")
     if etype in ("CUSTOMER.DISPUTE.CREATED", "CUSTOMER.DISPUTE.UPDATED") and dispute_id:
+        store.add_known_dispute(dispute_id)
         started = start_analysis(dispute_id, force=etype.endswith("UPDATED"))
         return {"dispute_id": dispute_id, "analysis_started": started}
     return {"ignored": etype}
@@ -277,6 +285,18 @@ async def paypal_webhook(request: Request):
     if not await asyncio.to_thread(paypal.verify_webhook, headers, event):
         raise HTTPException(400, "Webhook signature verification failed")
     return handle_event(event)
+
+
+class TrackDispute(BaseModel):
+    dispute_id: str
+
+
+@app.post("/api/disputes/track")
+def track_dispute(t: TrackDispute):
+    """Add a dispute to the queue by ID, for when it hasn't reached the list endpoint (or a webhook) yet."""
+    d = _paypal_call(paypal.get_dispute, t.dispute_id.strip())
+    store.add_known_dispute(d["dispute_id"])
+    return {"dispute_id": d["dispute_id"], "analysis_started": start_analysis(d["dispute_id"])}
 
 
 @app.post("/api/simulate/dispute")
@@ -331,6 +351,15 @@ def shop_capture(order_id: str):
 
 
 # ---- static -----------------------------------------------------------------------------------
+@app.middleware("http")
+async def revalidate_static(request: Request, call_next):
+    # Browsers otherwise cache app.js heuristically and keep serving an old UI after a deploy.
+    response = await call_next(request)
+    if request.url.path in ("/", "/shop") or request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @app.get("/healthz")
 def healthz():
     return {"ok": True}

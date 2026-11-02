@@ -21,6 +21,8 @@ class MerchantStore:
             saved = json.loads(path.read_text())
             # Orders placed through the sandbox shop survive restarts; seed data is regenerated.
             self.data["orders"].extend(saved.get("shop_orders", []))
+        # Disputes we learned of by ID (webhook or manual). The sandbox list endpoint can lag by hours.
+        self.known_disputes: list[str] = saved.get("known_disputes", []) if path and path.exists() else []
 
     # ---- lookups used by the agent -------------------------------------------------------
     def find_order(self, transaction_id: str | None = None, invoice: str | None = None) -> dict | None:
@@ -67,6 +69,12 @@ class MerchantStore:
             self.data["orders"].append(order)
             self._save()
 
+    def add_known_dispute(self, dispute_id: str) -> None:
+        with self._lock:
+            if dispute_id not in self.known_disputes:
+                self.known_disputes.append(dispute_id)
+                self._save()
+
     def add_refund(self, order_id: str, refund_id: str, amount: str, note: str) -> None:
         with self._lock:
             self.data["refunds"].append({
@@ -79,4 +87,4 @@ class MerchantStore:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
         shop = [o for o in self.data["orders"] if o.get("source") == "sandbox_shop"]
-        self.path.write_text(json.dumps({"shop_orders": shop}, indent=2))
+        self.path.write_text(json.dumps({"shop_orders": shop, "known_disputes": self.known_disputes}, indent=2))

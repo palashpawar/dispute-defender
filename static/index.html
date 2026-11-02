@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dispute Defender</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230f766e' d='M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js"></script>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" class="logo" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/><path d="m8.5 12 2.5 2.5 4.5-5" class="tick"/></svg>
+      <div>
+        <div class="name">Dispute Defender</div>
+        <div class="sub" id="seller">-</div>
+      </div>
+    </div>
+    <div class="badges">
+      <span class="badge" id="pp-badge" title="PayPal environment">PayPal</span>
+      <span class="badge" id="ai-badge" title="Analysis engine">AI</span>
+    </div>
+    <nav class="actions">
+      <button class="btn ghost" id="btn-simulate" hidden title="Simulates a CUSTOMER.DISPUTE.CREATED webhook">
+        <span class="dot pulse"></span> Simulate incoming dispute
+      </button>
+      <button class="btn" id="btn-analyze-all">Analyze all open</button>
+      <a class="btn ghost" href="/shop" target="_blank" rel="noopener">Sandbox shop ↗</a>
+    </nav>
+  </header>
+
+  <section class="kpis" id="kpis">
+    <div class="kpi"><div class="kpi-label">Open disputes</div><div class="kpi-value" id="k-open">-</div></div>
+    <div class="kpi"><div class="kpi-label">Revenue at risk</div><div class="kpi-value" id="k-risk">-</div></div>
+    <div class="kpi warn"><div class="kpi-label">Due within 48h</div><div class="kpi-value" id="k-due">-</div></div>
+    <div class="kpi good"><div class="kpi-label">Defensible (AI: fight)</div><div class="kpi-value" id="k-fight">-</div></div>
+    <div class="kpi"><div class="kpi-label">Won / resolved</div><div class="kpi-value" id="k-won">-</div></div>
+  </section>
+
+  <main class="layout">
+    <section class="queue">
+      <div class="queue-head">
+        <h2>Dispute queue</h2>
+        <input id="quick" type="search" placeholder="Filter disputes…" aria-label="Filter disputes">
+      </div>
+      <div id="grid" class="ag-theme-quartz grid"></div>
+    </section>
+
+    <aside class="drawer" id="drawer" hidden>
+      <div class="drawer-scroll" id="drawer-body"></div>
+    </aside>
+  </main>
+
+  <details class="console" id="console">
+    <summary>PayPal API console <span class="muted" id="console-count"></span></summary>
+    <div class="console-body" id="console-body"></div>
+  </details>
+
+  <div class="toast" id="toast" hidden></div>
+  <dialog id="confirm">
+    <form method="dialog">
+      <h3 id="confirm-title">Confirm</h3>
+      <p id="confirm-text"></p>
+      <pre id="confirm-payload"></pre>
+      <menu>
+        <button value="cancel" class="btn ghost">Cancel</button>
+        <button value="ok" class="btn primary" id="confirm-ok">Send to PayPal</button>
+      </menu>
+    </form>
+  </dialog>
+  <script src="/static/app.js"></script>
+</body>
+</html>

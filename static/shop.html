@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fernwood Sandbox Shop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    .wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+    .note { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin: 16px 0 20px; }
+    .note ol { margin: 6px 0 0; padding-left: 20px; }
+    .products { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .product { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .art { height: 130px; border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; }
+    .art svg { width: 70px; height: 70px; fill: none; stroke: var(--brand); stroke-width: 1.6; }
+    .price { font-weight: 700; font-size: 18px; }
+    .pp { min-height: 45px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand"><svg viewBox="0 0 24 24" class="logo"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></svg>
+      <div><div class="name">Fernwood Ceramics: sandbox shop</div><div class="sub">Creates real PayPal sandbox orders so you can open real sandbox disputes</div></div></div>
+    <div class="note" id="note">Loading…</div>
+    <div class="products" id="products"></div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+<script>
+const ART = {
+  mug: '<path d="M6 7h10v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z"/><path d="M16 9h2a2 2 0 0 1 0 4h-2"/>',
+  bowl: '<path d="M3 10h18a9 6 0 0 1-18 0z"/><path d="M8 19h8"/>',
+  vase: '<path d="M9 3h6M10 3c0 3-4 5-4 10a6 6 0 0 0 12 0c0-5-4-7-4-10"/>',
+  planter: '<path d="M5 9h14l-2 10H7z"/><path d="M12 9V3M8 3l4 3 4-3"/>',
+};
+const toast = (m) => { const t = document.getElementById("toast"); t.textContent = m; t.hidden = false; setTimeout(() => t.hidden = true, 5000); };
+(async () => {
+  const meta = await (await fetch("/api/meta")).json();
+  const catalog = await (await fetch("/api/shop/catalog")).json();
+  const note = document.getElementById("note");
+  if (!meta.paypal_client_id) {
+    note.innerHTML = "<b>The sandbox shop needs PayPal sandbox credentials.</b> Set <code>PAYPAL_CLIENT_ID</code> and <code>PAYPAL_CLIENT_SECRET</code> (see README). In mock mode, use <b>Simulate incoming dispute</b> on the dashboard instead.";
+  } else {
+    note.innerHTML = `<b>How to create a real sandbox dispute</b><ol>
+      <li>Buy an item below with your <b>sandbox personal (buyer) account</b>.</li>
+      <li>Log in to <a href="https://www.sandbox.paypal.com/myaccount/summary" target="_blank" rel="noopener">sandbox.paypal.com</a> as that buyer, open the payment and choose <i>Report a problem</i>.</li>
+      <li>Back in <a href="/">Dispute Defender</a> the dispute appears in the queue (or arrives via the CUSTOMER.DISPUTE.CREATED webhook) and Claude investigates it.</li></ol>`;
+    const s = document.createElement("script");
+    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(meta.paypal_client_id)}&currency=USD&intent=capture`;
+    s.onload = render; document.head.appendChild(s);
+  }
+  const el = document.getElementById("products");
+  el.innerHTML = catalog.map((p) => `<div class="product"><div class="art"><svg viewBox="0 0 24 24">${ART[p.img]}</svg></div>
+    <div><b>${p.name}</b></div><div class="price">$${p.price} <span class="muted" style="font-size:12px;font-weight:400">+ $8 shipping</span></div>
+    <div class="pp" id="pp-${p.sku}"></div></div>`).join("");
+  if (!meta.paypal_client_id) return;
+  function render() {
+    for (const p of catalog) {
+      paypal.Buttons({
+        style: { layout: "horizontal", height: 40, tagline: false },
+        createOrder: async () => (await (await fetch("/api/shop/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sku: p.sku, qty: 1 }) })).json()).id,
+        onApprove: async (data) => {
+          const r = await (await fetch(`/api/shop/orders/${data.orderID}/capture`, { method: "POST" })).json();
+          toast(`Paid! Capture ${r.capture_id} recorded as a merchant order.`);
+        },
+        onError: (err) => toast(`PayPal error: ${err}`),
+      }).render(`#pp-${p.sku}`);
+    }
+  }
+})();
+</script>
+</body>
+</html>

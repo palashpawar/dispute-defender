@@ -1,0 +1,11 @@
+[
+  {"id": "intro", "text": "Small sellers on PayPal lose disputes they could have won, and fight ones they should have conceded. Dispute Defender is an AI chargeback analyst for PayPal merchants. This is the queue for Fernwood Ceramics: open disputes pulled from the PayPal Disputes API, sorted by response deadline, with revenue at risk up top."},
+  {"id": "investigate", "text": "Let's open this one. The buyer says the order never arrived. I click Investigate, and Claude Opus 5.5 starts an agent loop. It reads the PayPal dispute, then pulls the linked order, the UPS tracking, the support inbox, refunds and customer history, through tool calls you can watch live."},
+  {"id": "verdict", "text": "The verdict: fight, with a calibrated win probability. UPS shows an adult signature at the buyer's address. Every key fact cites its source, and Claude flags its own risks, like the signature being taken at a front desk."},
+  {"id": "evidence", "text": "It maps the evidence to PayPal's evidence types, and drafts the statement PayPal's reviewer will read. I can change the recommendation, untick evidence, or rewrite anything."},
+  {"id": "submit", "text": "Nothing reaches PayPal without my approval. The confirm dialog shows the exact request. I send it, and Dispute Defender calls provide evidence, with an evidence packet PDF attached automatically."},
+  {"id": "console", "text": "Every PayPal call, and its response, is logged right here."},
+  {"id": "accept", "text": "And it is not a fight-everything bot. Here, the return arrived and was never refunded. Claude sees that the merchant is at fault, and recommends accepting the claim instead of wasting a response."},
+  {"id": "sandbox", "text": "This also runs against the real PayPal sandbox. I bought a planter in the built-in shop, which uses PayPal Checkout, then opened a dispute as the buyer. Claude notices nothing has shipped, and that the dispute came three minutes after payment, so it recommends refunding rather than shipping into an open dispute."},
+  {"id": "outro", "text": "Dispute Defender. Claude does the investigation, PayPal's APIs do the paperwork, and the merchant stays in control. Built with Claude Opus 5.5, the PayPal Disputes, Orders and Webhooks APIs, and AG Grid."}
+]

@@ -6,3 +6,4 @@ pydantic>=2.7
 python-dotenv>=1.0
 python-multipart>=0.0.9
 fpdf2>=2.7
+elevenlabs>=2.75  # demo video narration (demo/tts.py)

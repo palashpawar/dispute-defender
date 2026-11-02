@@ -1,2 +1,4 @@
 -r requirements.txt
 pytest>=8
+# demo video tooling (demo/)
+playwright>=1.64

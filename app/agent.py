@@ -23,7 +23,7 @@ EVIDENCE_TYPES = [
     "PROOF_OF_FULFILLMENT", "PROOF_OF_DELIVERY_SIGNATURE", "ONLINE_TRACKING_INFORMATION", "PROOF_OF_REFUND",
     "PROOF_OF_RECEIPT_COPY", "RETURN_POLICY", "BILLING_AGREEMENT", "ITEM_DESCRIPTION", "DETAILS_OF_PURCHASE",
     "ORDER_DETAILS", "DELIVERY_ADDRESS", "CANCELLATION_DETAILS", "PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED",
-    "MERCHANT_RESPONSE", "OTHER",
+    "OTHER",  # MERCHANT_RESPONSE is added from seller_statement in plan_to_evidences
 ]
 POLICY_TOPICS = ["returns", "shipping", "handmade", "workshops", "subscriptions"]
 
@@ -104,7 +104,7 @@ class AgentError(Exception):
 class DisputeAgent:
     def __init__(self, paypal, store: MerchantStore):
         self.paypal, self.store = paypal, store
-        self.client = anthropic.Anthropic(max_retries=3)
+        self.client = anthropic.Anthropic(max_retries=3, timeout=120.0)  # a stalled request retries instead of hanging the case
 
     # ---- tool execution -----------------------------------------------------------------
     def run_tool(self, name: str, args: dict) -> Any:
@@ -218,6 +218,8 @@ def plan_to_evidences(plan: dict) -> list[dict]:
     """Turn the case plan's evidence items into the PayPal provide-evidence `evidences` array."""
     out = []
     for e in plan.get("evidence", []):
+        if e["evidence_type"] == "MERCHANT_RESPONSE":
+            continue
         item: dict = {"evidence_type": e["evidence_type"], "notes": (e.get("notes") or "")[:2000]}
         info: dict = {}
         if e.get("tracking_number"):

@@ -4,6 +4,10 @@
 
 > Built for the PayPal AI Hackathon ("Build what's next with PayPal and AI").
 
+[![Dispute Defender demo video](docs/demo-thumbnail.png)](https://youtu.be/XTFwprwivak)
+
+**[Watch the 2½-minute demo on YouTube](https://youtu.be/XTFwprwivak)**: Claude investigating disputes live, the FIGHT/ACCEPT verdicts, and a real PayPal sandbox dispute.
+
 ## The problem
 
 Small sellers lose disputes they should win and fight disputes they should concede. Answering a chargeback means digging through tracking pages, emails and refund records, matching them to PayPal's evidence types, and writing a statement before the deadline. A one-person shop with a dozen disputes a month usually just refunds everything, or misses deadlines. Either way it loses revenue and seller standing.
